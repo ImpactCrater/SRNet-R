@@ -15,9 +15,6 @@ config.checkpoint_path = config.home_path + '/SRNet/checkpoint/'
 # samples location
 config.samples_path = config.home_path + '/SRNet/samples/'
 
-# log location
-config.VALID.logdir = config.home_path + '/SRNet/logs/'
-
 ## Adam
 config.TRAIN.sample_batch_size = 25
 config.TRAIN.batch_size = 16
