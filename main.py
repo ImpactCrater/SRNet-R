@@ -34,7 +34,6 @@ valid_hr_img_path = config.VALID.hr_img_path
 train_hr_img_path = config.TRAIN.hr_img_path
 eval_img_name = config.VALID.eval_img_name
 eval_img_path = config.VALID.eval_img_path
-logdir = config.VALID.logdir
 
 ni = int(np.sqrt(sample_batch_size))
 
