@@ -59,7 +59,6 @@ def train():
     save_dir_gen = samples_path + "gen"
     tl.files.exists_or_mkdir(save_dir_gen)
     tl.files.exists_or_mkdir(checkpoint_path)
-    tl.files.exists_or_mkdir(logdir)
 
     ###====================== PRE-LOAD DATA ===========================###
     valid_hr_img_list = sorted(tl.files.load_file_list(path=valid_hr_img_path, regx='.*.png', printable=False))
@@ -97,7 +96,6 @@ def train():
 
     ###========================== RESTORE MODEL =============================###
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=False))
-    loss_writer = tf.summary.FileWriter(logdir, sess.graph)
     sess.run(tf.variables_initializer(tf.global_variables()))
     tl.files.load_and_assign_npz(sess=sess, name=checkpoint_path + 'gen.npz', network=net_g)
 
