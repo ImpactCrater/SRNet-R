@@ -24,7 +24,7 @@ def gen(t_image, is_train=False, reuse=False):
     with tf.variable_scope("gen", reuse=reuse) as vs:
         n = InputLayer(t_image, name='in')
         n = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, name='c0')
-        n = GroupNormLayer(n, groups=32, act=None, name='gn0')
+        n = GroupNormLayer(n, groups=16, act=None, name='gn0')
         temp = n
 
         # residual blocks
