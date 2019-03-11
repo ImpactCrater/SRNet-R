@@ -19,16 +19,16 @@ def gen(t_image, is_train=False, reuse=False):
     """
     w_init = tf.random_normal_initializer(stddev=0.02)
     b_init = None # tf.constant_initializer(value=0.0)
-    df_dim = 128
+    df_dim = 256
     swish = lambda x: tf.nn.swish(x)
     with tf.variable_scope("gen", reuse=reuse) as vs:
         n = InputLayer(t_image, name='in')
         n = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, name='c0')
-        n = GroupNormLayer(n, groups=8, act=None, name='gn0')
+        n = GroupNormLayer(n, groups=32, act=None, name='gn0')
         temp = n
 
         # residual blocks
-        for i in range(20):
+        for i in range(16):
             nn = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='res_c0/%s' % i)
             nn = Conv2d(nn, df_dim, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, b_init=b_init, name='res_c1/%s' % i)
             nn = ElementwiseLayer([n, nn], tf.add, name='res_add0/%s' % i)
