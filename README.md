@@ -15,14 +15,14 @@ Install TensorFlow.
 Follow the instructions below to install other requirements.
 ```bash
 cd ~/
-sudo python3.5 -m pip install https://github.com/tensorlayer/tensorlayer/archive/master.zip
-sudo python3.5 -m pip install --upgrade tensorlayer
+sudo python3 -m pip install https://github.com/tensorlayer/tensorlayer/archive/master.zip
+sudo python3 -m pip install --upgrade tensorlayer
 git clone https://github.com/ImpactCrater/SRNet.git
-sudo python3.5 -m pip install easydict
+sudo python3 -m pip install easydict
 sudo apt install python3-tk
 ```
 
-We run this script under [TensorFlow](https://www.tensorflow.org) 1.4 and the [TensorLayer](https://github.com/tensorlayer/tensorlayer) 1.8.0+.
+We run this script under [TensorFlow](https://www.tensorflow.org) 1.12 and the [TensorLayer](https://github.com/tensorlayer/tensorlayer) 1.8.0+.
 
 
 ### My Results
