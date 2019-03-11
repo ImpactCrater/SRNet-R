@@ -80,11 +80,7 @@ def train():
     # ###========================== DEFINE TRAIN OPS ==========================###
 
     # MSE Loss
-    with tf.name_scope('MSE_Loss'):
-        mse_loss = tf.reduce_mean(tf.square(t_target_image - net_g.outputs))
-        tf.summary.scalar('mse_loss', mse_loss)
-
-    merged = tf.summary.merge_all()
+    mse_loss = tf.reduce_mean(tf.square(t_target_image - net_g.outputs))
 
     with tf.variable_scope('learning_rate'):
         learning_rate_var = tf.Variable(learning_rate, trainable=False)
@@ -145,14 +141,12 @@ def train():
         print(log)
 
         ## quick evaluation on train set
-        if (epoch != - 1) and (epoch % 1 == 0):
-            out = sess.run(net_g_test.outputs, {sample_t_image: sample_imgs_96})
-            print("[*] save images")
-            tl.vis.save_images(out, [ni, ni], save_dir_gen + '/train_%d.png' % epoch)
+        out = sess.run(net_g_test.outputs, {sample_t_image: sample_imgs_96})
+        print("[*] save images")
+        tl.vis.save_images(out, [ni, ni], save_dir_gen + '/train_%d.png' % epoch)
 
         ## save model
-        if (epoch != - 1) and (epoch % 1 == 0):
-            tl.files.save_npz(net_g.all_params, name=checkpoint_path + 'gen.npz'.format(tl.global_flag['mode']), sess=sess)
+        tl.files.save_npz(net_g.all_params, name=checkpoint_path + 'gen.npz'.format(tl.global_flag['mode']), sess=sess)
 
 
 def evaluate():
