@@ -2,7 +2,7 @@
 
 - **Partially imported from [tensorlayer/srgan](https://github.com/tensorlayer/srgan).**
 - **Using single "Group Normalization" layer instead of "Batch Normalization" layers.**
-- **Using "Residual Network".**
+- **Using wide "Residual Network".**
 - **Using "Swish" activation function instead of "ReLU".**
 
 ### System Requirements
