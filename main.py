@@ -10,7 +10,7 @@ import math
 
 import tensorflow as tf
 import tensorlayer as tl
-from model import gen
+from model import *
 from utils import *
 from config import config, log_config
 from PIL import Image
@@ -24,8 +24,7 @@ sample_batch_size = config.TRAIN.sample_batch_size
 ## Adam
 batch_size = config.TRAIN.batch_size
 learning_rate = config.TRAIN.learning_rate
-beta1 = config.TRAIN.beta1
-## train
+## training
 n_epoch = config.TRAIN.n_epoch
 ## paths
 samples_path = config.samples_path
@@ -56,7 +55,7 @@ def load_deep_file_list(path=None, regx='\.npz', printable=True):
 
 def train():
     ## create folders to save result images and trained model
-    save_dir_gen = samples_path + "gen"
+    save_dir_gen = samples_path + "generated"
     tl.files.exists_or_mkdir(save_dir_gen)
     tl.files.exists_or_mkdir(checkpoint_path)
 
@@ -65,35 +64,50 @@ def train():
 
     ###========================== DEFINE MODEL ============================###
     ## train inference
-    sample_t_image = tf.placeholder('float32', [sample_batch_size, 96, 96, 3], name='sample_t_image_input_to_generator')
-    t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_generator')
+    sample_t_image = tf.placeholder('float32', [sample_batch_size, 96, 96, 3], name='sample_t_image')
+    t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image')
     t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
 
-    net_g = gen(t_image, is_train=True, reuse=False)
+    net_g = Generator(t_image, is_train=True, reuse=False)
+    net_ae = AE(t_target_image, is_train=True, reuse=False)
+    net_e0 = Encoder(t_target_image, is_train=True, reuse=True)
+    net_e1 = Encoder(net_g.outputs, is_train=True, reuse=True)
 
     net_g.print_params(False)
     net_g.print_layers()
+    net_ae.print_params(False)
+    net_ae.print_layers()
 
     ## test inference
-    net_g_test = gen(sample_t_image, is_train=False, reuse=True)
+    net_g_test = Generator(sample_t_image, is_train=False, reuse=True)
 
     # ###========================== DEFINE TRAIN OPS ==========================###
 
-    # MSE Loss
-    mse_loss = tf.reduce_mean(tf.square(t_target_image - net_g.outputs))
+    # MAE Loss
+    mae_loss_ae = tf.reduce_mean(tf.map_fn(tf.abs, t_target_image - net_ae.outputs))
+
+    mae_loss0 = tf.reduce_mean(tf.map_fn(tf.abs, t_target_image - net_g.outputs))
+    mae_loss1 = tf.reduce_mean(tf.map_fn(tf.abs, net_e0.outputs - net_e1.outputs))
+
+    g_loss = mae_loss0 + mae_loss1
 
     with tf.variable_scope('learning_rate'):
         learning_rate_var = tf.Variable(learning_rate, trainable=False)
 
-    g_vars = tl.layers.get_variables_with_name('gen', True, True)
+    g_vars = tl.layers.get_variables_with_name('Generator', True, True)
+    ae_vars = tl.layers.get_variables_with_name('AE', True, True)
 
-    ## Train
-    g_optim = tf.train.AdamOptimizer(learning_rate=learning_rate_var, beta1=beta1).minimize(mse_loss, var_list=g_vars)
+    ## Generator
+    g_optim = tf.train.AdamOptimizer(learning_rate=learning_rate_var).minimize(g_loss, var_list=g_vars)
+
+    ## Autoencoder
+    ae_optim = tf.train.AdamOptimizer(learning_rate=learning_rate_var).minimize(mae_loss_ae, var_list=ae_vars)
 
     ###========================== RESTORE MODEL =============================###
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=False))
     sess.run(tf.variables_initializer(tf.global_variables()))
-    tl.files.load_and_assign_npz(sess=sess, name=checkpoint_path + 'gen.npz', network=net_g)
+    tl.files.load_and_assign_npz(sess=sess, name=checkpoint_path + 'g.npz', network=net_g)
+    tl.files.load_and_assign_npz(sess=sess, name=checkpoint_path + 'ae.npz', network=net_ae)
 
     ###============================= TRAINING ===============================###
     sample_imgs = tl.prepro.threading_data(valid_hr_img_list[0:sample_batch_size], fn=get_imgs_fn, path=valid_hr_img_path)
@@ -104,13 +118,11 @@ def train():
     tl.vis.save_images(sample_imgs_96, [ni, ni], save_dir_gen + '/_train_sample_96.png')
     tl.vis.save_images(sample_imgs_384, [ni, ni], save_dir_gen + '/_train_sample_384.png')
 
-    ###========================= train Generator ====================###
-    ## fixed learning rate
+    ###========================= train =========================###
     sess.run(tf.assign(learning_rate_var, learning_rate))
-    print(" ** fixed learning rate: %f" % learning_rate)
     for epoch in range(0, n_epoch + 1):
         epoch_time = time.time()
-        total_mse_loss, n_iter = 0, 0
+        total_g_loss, n_iter = 0, 0
 
         train_hr_img_list = load_deep_file_list(path=train_hr_img_path, regx='.*.png', printable=False)
         random.shuffle(train_hr_img_list)
@@ -132,12 +144,18 @@ def train():
             b_imgs_96 = tl.prepro.threading_data(b_imgs_384, fn=downsample_fn)
             b_imgs_384 = tl.prepro.threading_data(b_imgs_384, fn=rescale_m1p1)
 
+            ## update Autoencoder
+            errAE, _ = sess.run([mae_loss_ae, ae_optim], {t_target_image: b_imgs_384})
+
             ## update Generator
-            errM, _ = sess.run([mse_loss, g_optim], {t_image: b_imgs_96, t_target_image: b_imgs_384})
-            print("Epoch [%2d/%2d] %4d time: %4.4fs, mse: %.10f " % (epoch, n_epoch, n_iter, time.time() - step_time, errM))
-            total_mse_loss += errM
+            errG, errM0, errM1, _ = sess.run([g_loss, mae_loss0, mae_loss1, g_optim], {t_image: b_imgs_96, t_target_image: b_imgs_384})
+            print("Epoch: %2d/%2d %4d time: %4.2fs g_loss: %.8f mae0: %.8f mae1: %.8f ae_loss: %.8f" %
+                  (epoch, n_epoch, n_iter, time.time() - step_time, errG, errM0, errM1, errAE))
+            total_g_loss += errG
             n_iter += 1
-        log = "[*] Epoch: [%2d/%2d] time: %4.4fs, mse: %.10f" % (epoch, n_epoch, time.time() - epoch_time, total_mse_loss / n_iter)
+
+        log = ("[*] Epoch[%2d/%2d] time: %4.2fs g_loss: %.8f" %
+            (epoch, n_epoch, time.time() - epoch_time, total_g_loss / n_iter))
         print(log)
 
         ## quick evaluation on train set
@@ -146,12 +164,13 @@ def train():
         tl.vis.save_images(out, [ni, ni], save_dir_gen + '/train_%d.png' % epoch)
 
         ## save model
-        tl.files.save_npz(net_g.all_params, name=checkpoint_path + 'gen.npz'.format(tl.global_flag['mode']), sess=sess)
+        tl.files.save_npz(net_g.all_params, name=checkpoint_path + 'g.npz', sess=sess)
+        tl.files.save_npz(net_ae.all_params, name=checkpoint_path + 'ae.npz', sess=sess)
 
 
 def evaluate():
     ## create folders to save result images
-    save_dir = samples_path + "{}".format(tl.global_flag['mode'])
+    save_dir = samples_path + "evaluate"
     tl.files.exists_or_mkdir(save_dir)
 
     ###========================== DEFINE MODEL ============================###
@@ -161,12 +180,12 @@ def evaluate():
     size = valid_lr_img.shape
     t_image = tf.placeholder('float32', [1, None, None, 3], name='input_image')
 
-    net_g = gen(t_image, is_train=False, reuse=False)
+    net_g = Generator(t_image, is_train=False, reuse=False)
 
     ###========================== RESTORE G =============================###
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=False))
     sess.run(tf.variables_initializer(tf.global_variables()))
-    tl.files.load_and_assign_npz(sess=sess, name=checkpoint_path + 'gen.npz', network=net_g)
+    tl.files.load_and_assign_npz(sess=sess, name=checkpoint_path + 'g.npz', network=net_g)
 
     ###======================= EVALUATION =============================###
     start_time = time.time()
@@ -186,13 +205,13 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--mode', type=str, default='train', help='train, evaluate')
+    parser.add_argument('--mode', type=str, default='SRNet-R', help='SRNet-R, evaluate')
 
     args = parser.parse_args()
 
     tl.global_flag['mode'] = args.mode
 
-    if tl.global_flag['mode'] == 'train':
+    if tl.global_flag['mode'] == 'SRNet-R':
         train()
     elif tl.global_flag['mode'] == 'evaluate':
         evaluate()
