@@ -1,9 +1,10 @@
 ## Super-Resolution Network
 
 - **Partially imported from [tensorlayer/srgan](https://github.com/tensorlayer/srgan).**
-- **Using single "Group Normalization" layer instead of "Batch Normalization" layers.**
+- **Using "Group Normalization" layers instead of "Batch Normalization" layers.**
 - **Using "Residual Network".**
 - **Using "Swish" activation function instead of "ReLU".**
+- **Using Autoencorder's latent space content loss and MAE loss.**
 
 ### System Requirements
 - **Memory: 12GB RAM**
@@ -17,7 +18,7 @@ Follow the instructions below to install other requirements.
 cd ~/
 sudo python3 -m pip install https://github.com/tensorlayer/tensorlayer/archive/master.zip
 sudo python3 -m pip install --upgrade tensorlayer
-git clone https://github.com/ImpactCrater/SRNet.git
+git clone https://github.com/ImpactCrater/SRNet-R.git
 sudo python3 -m pip install easydict
 sudo apt install python3-tk
 ```
