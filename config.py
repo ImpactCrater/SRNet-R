@@ -10,26 +10,25 @@ config.VALID = edict()
 config.home_path = expanduser("~")
 
 # checkpoint location
-config.checkpoint_path = config.home_path + '/SRNet/checkpoint/'
+config.checkpoint_path = config.home_path + '/SRNet-R/checkpoint/'
 
 # samples location
-config.samples_path = config.home_path + '/SRNet/samples/'
+config.samples_path = config.home_path + '/SRNet-R/samples/'
 
 ## Adam
 config.TRAIN.sample_batch_size = 25
 config.TRAIN.batch_size = 9
 config.TRAIN.learning_rate = 1e-4
-config.TRAIN.beta1 = 0.9
 
-## Generator
+## training
 config.TRAIN.n_epoch = 1000
 
 ## train set location
-config.TRAIN.hr_img_path = config.home_path + '/SRNet/HRImage_Training/'
+config.TRAIN.hr_img_path = config.home_path + '/SRNet-R/HRImage_Training/'
 
 ## test set location
-config.VALID.hr_img_path = config.home_path + '/SRNet/HRImage_Validation/'
-config.VALID.eval_img_path = config.home_path + '/SRNet/LRImage_Evaluation/'
+config.VALID.hr_img_path = config.home_path + '/SRNet-R/HRImage_Validation/'
+config.VALID.eval_img_path = config.home_path + '/SRNet-R/LRImage_Evaluation/'
 config.VALID.eval_img_name = '1.png'
 
 def log_config(filename, cfg):
