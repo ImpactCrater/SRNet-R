@@ -30,13 +30,13 @@ We run this script under [TensorFlow](https://www.tensorflow.org) 1.12 and the [
 
 <a href="http://tensorlayer.readthedocs.io">
 <div align="center">
-	<img src="img/Comparison_1.png"/>
+	<img src="img/SRNet-R_Comparison_1_label_1.png"/>
 </div>
 </a>
 
 <a href="http://tensorlayer.readthedocs.io">
 <div align="center">
-	<img src="img/Comparison_2.png"/>
+	<img src="img/SRNet-R_Comparison_2_label_1.png"/>
 </div>
 </a>
 Original image is from iStock.
