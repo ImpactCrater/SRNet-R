@@ -61,10 +61,6 @@ def Encoder(input_images, is_train=False, reuse=False):
         n = GroupNormLayer(n, groups=16, act=None, name='gn_e2')
         n = Conv2d(n, df_dim * 8, (4, 4), (2, 2), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='c_e3')
         n = GroupNormLayer(n, groups=32, act=None, name='gn_e3')
-        n = Conv2d(n, df_dim * 16, (4, 4), (2, 2), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='c_e4')
-        n = GroupNormLayer(n, groups=64, act=None, name='gn_e4')
-        n = Conv2d(n, df_dim * 32, (4, 4), (2, 2), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='c_e5')
-        n = GroupNormLayer(n, groups=128, act=None, name='gn_e5')
         return n
 
 
@@ -74,31 +70,23 @@ def Decoder(n, is_train=False, reuse=False):
     df_dim = 64
     swish = lambda x: tf.nn.swish(x)
     with tf.variable_scope("AE", reuse=reuse) as vs:
-        n = Conv2d(n, df_dim * 32, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d0')
-        n = GroupNormLayer(n, groups=128, act=None, name='gn_d0')
+        n = Conv2d(n, df_dim * 8, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d0')
+        n = GroupNormLayer(n, groups=32, act=None, name='gn_d0')
         n = SubpixelConv2d(n, scale=2, n_out_channel=None, act=swish, name='pixelshufflerx2_0')
 
-        n = Conv2d(n, df_dim * 16, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d1')
-        n = GroupNormLayer(n, groups=64, act=None, name='gn_d1')
+        n = Conv2d(n, df_dim * 4, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d1')
+        n = GroupNormLayer(n, groups=16, act=None, name='gn_d1')
         n = SubpixelConv2d(n, scale=2, n_out_channel=None, act=swish, name='pixelshufflerx2_1')
 
-        n = Conv2d(n, df_dim * 8, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d2')
-        n = GroupNormLayer(n, groups=32, act=None, name='gn_d2')
+        n = Conv2d(n, df_dim * 2, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d2')
+        n = GroupNormLayer(n, groups=8, act=None, name='gn_d2')
         n = SubpixelConv2d(n, scale=2, n_out_channel=None, act=swish, name='pixelshufflerx2_2')
 
-        n = Conv2d(n, df_dim * 4, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d3')
-        n = GroupNormLayer(n, groups=16, act=None, name='gn_d3')
+        n = Conv2d(n, df_dim, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d3')
+        n = GroupNormLayer(n, groups=4, act=None, name='gn_d3')
         n = SubpixelConv2d(n, scale=2, n_out_channel=None, act=swish, name='pixelshufflerx2_3')
 
-        n = Conv2d(n, df_dim * 2, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d4')
-        n = GroupNormLayer(n, groups=8, act=None, name='gn_d4')
-        n = SubpixelConv2d(n, scale=2, n_out_channel=None, act=swish, name='pixelshufflerx2_4')
-
-        n = Conv2d(n, df_dim, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c_d5')
-        n = GroupNormLayer(n, groups=4, act=None, name='gn_d5')
-        n = SubpixelConv2d(n, scale=2, n_out_channel=None, act=swish, name='pixelshufflerx2_5')
-
-        n = Conv2d(n, 3, (1, 1), (1, 1), act=tf.nn.tanh, padding='SAME', W_init=w_init, name='c_d6')
+        n = Conv2d(n, 3, (1, 1), (1, 1), act=tf.nn.tanh, padding='SAME', W_init=w_init, name='c_d4')
         return n
 
 
