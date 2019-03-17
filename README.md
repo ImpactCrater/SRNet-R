@@ -54,6 +54,12 @@ Original image is from iStock.
    -  You can set the path to your validation image folder via `config.VALID.hr_img_path` in `config.py`.
    -  Subdirectories are searched recursively.
 
+### You can use pre-trained model and re-train it.
+ 1. Download the [ZIP file from the file storage(Yahoo! JAPAN)](https://yahoo.jp/box/x9Zq_r).
+ 1. Unzip it.
+ 1. Move 2 files 'ae.npz', 'g.npz' into './SRNet-R/checkpoint/'.
+ 1. Run.
+
 ### Run
 
 #### Start training.
