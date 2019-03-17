@@ -7,7 +7,7 @@
 - **Using Autoencorder's latent space content loss and MAE loss.**
 
 ### System Requirements
-- **Memory: 8GB RAM**
+- **Memory: 6GB RAM**
 
 ## Preparation
 
