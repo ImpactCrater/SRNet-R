@@ -84,7 +84,7 @@ def train():
     # ###========================== DEFINE TRAIN OPS ==========================###
 
     # MAE Loss
-    mae_loss_ae = tf.reduce_mean(tf.map_fn(tf.abs, t_target_image - net_ae.outputs))
+    ae_loss = tf.reduce_mean(tf.map_fn(tf.abs, t_target_image - net_ae.outputs))
 
     mae_loss0 = tf.reduce_mean(tf.map_fn(tf.abs, t_target_image - net_g.outputs))
     mae_loss1 = tf.reduce_mean(tf.map_fn(tf.abs, net_e0.outputs - net_e1.outputs))
@@ -97,11 +97,11 @@ def train():
     g_vars = tl.layers.get_variables_with_name('Generator', True, True)
     ae_vars = tl.layers.get_variables_with_name('AE', True, True)
 
+    ## Autoencoder
+    ae_optim = tf.train.AdamOptimizer(learning_rate=learning_rate_var).minimize(ae_loss, var_list=ae_vars)
+
     ## Generator
     g_optim = tf.train.AdamOptimizer(learning_rate=learning_rate_var).minimize(g_loss, var_list=g_vars)
-
-    ## Autoencoder
-    ae_optim = tf.train.AdamOptimizer(learning_rate=learning_rate_var).minimize(mae_loss_ae, var_list=ae_vars)
 
     ###========================== RESTORE MODEL =============================###
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=False))
@@ -122,7 +122,7 @@ def train():
     sess.run(tf.assign(learning_rate_var, learning_rate))
     for epoch in range(0, n_epoch + 1):
         epoch_time = time.time()
-        total_g_loss, n_iter = 0, 0
+        total_ae_loss, total_g_loss, n_iter = 0, 0, 0
 
         train_hr_img_list = load_deep_file_list(path=train_hr_img_path, regx='.*.png', printable=False)
         random.shuffle(train_hr_img_list)
@@ -145,17 +145,18 @@ def train():
             b_imgs_384 = tl.prepro.threading_data(b_imgs_384, fn=rescale_m1p1)
 
             ## update Autoencoder
-            errAE, _ = sess.run([mae_loss_ae, ae_optim], {t_target_image: b_imgs_384})
+            errAE, _ = sess.run([ae_loss, ae_optim], {t_target_image: b_imgs_384})
 
             ## update Generator
             errG, errM0, errM1, _ = sess.run([g_loss, mae_loss0, mae_loss1, g_optim], {t_image: b_imgs_96, t_target_image: b_imgs_384})
             print("Epoch: %2d/%2d %4d time: %4.2fs g_loss: %.8f mae0: %.8f mae1: %.8f ae_loss: %.8f" %
                   (epoch, n_epoch, n_iter, time.time() - step_time, errG, errM0, errM1, errAE))
+            total_ae_loss += errAE
             total_g_loss += errG
             n_iter += 1
 
-        log = ("[*] Epoch[%2d/%2d] time: %4.2fs g_loss: %.8f" %
-            (epoch, n_epoch, time.time() - epoch_time, total_g_loss / n_iter))
+        log = ("[*] Epoch[%2d/%2d] time: %4.2fs g_loss: %.12f ae_loss: %.12f" %
+            (epoch, n_epoch, time.time() - epoch_time, total_g_loss / n_iter, total_ae_loss / n_iter))
         print(log)
 
         ## quick evaluation on train set
