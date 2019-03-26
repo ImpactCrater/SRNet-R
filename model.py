@@ -11,8 +11,6 @@ from tensorlayer.layers import *
 # from tensorflow.python.util import nest
 # from tensorflow.contrib.rnn.python.ops import core_rnn_cell
 
-# https://github.com/david-gpu/srez/blob/master/srez_model.py
-
 
 def Generator(t_image, is_train=False, reuse=False):
     w_init = tf.random_normal_initializer(stddev=0.02)
@@ -23,18 +21,28 @@ def Generator(t_image, is_train=False, reuse=False):
         n = InputLayer(t_image, name='in')
         n = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, name='c0')
         n = GroupNormLayer(n, groups=8, act=None, name='gn0')
-        temp = n
 
-        # residual blocks
-        for i in range(16):
-            nn = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='res_c0/%s' % i)
-            nn = Conv2d(nn, df_dim, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, b_init=b_init, name='res_c1/%s' % i)
-            nn = ElementwiseLayer([n, nn], tf.add, name='res_add0/%s' % i)
-            n = nn
+        # residual in residual blocks
+        temp2 = n
+        for k in range(2):
+            temp1 = n
+            for j in range(4):
+                temp0 = n
+                for i in range(4):
+                    nn = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='res_c0/%s_%s_%s' % (k, j, i))
+                    nn = Conv2d(nn, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='res_c1/%s_%s_%s' % (k, j, i))
+                    nn = ElementwiseLayer([n, nn], tf.add, name='res_add0/%s_%s_%s' % (k, j, i))
+                    n = nn
 
-        n = Conv2d(n, df_dim, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, b_init=b_init, name='res_c2')
-        n = ElementwiseLayer([temp, n], tf.add, name='res_add1')
-        # residual blocks end
+                n = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='res_c2/%s_%s' % (k, j))
+                n = ElementwiseLayer([temp0, n], tf.add, name='res_add1/%s_%s' % (k, j))
+
+            n = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='res_c3/%s' % k)
+            n = ElementwiseLayer([temp1, n], tf.add, name='res_add2/%s' % k)
+
+        n = Conv2d(n, df_dim, (3, 3), (1, 1), act=swish, padding='SAME', W_init=w_init, b_init=b_init, name='res_c4')
+        n = ElementwiseLayer([temp2, n], tf.add, name='res_add3')
+        # residual in residual blocks end
 
         n = Conv2d(n, 256, (3, 3), (1, 1), act=None, padding='SAME', W_init=w_init, name='c1')
         n = SubpixelConv2d(n, scale=2, n_out_channel=None, act=swish, name='pixelshufflerx2/1')
