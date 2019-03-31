@@ -28,19 +28,16 @@ We run this script under [TensorFlow](https://www.tensorflow.org) 1.12 and the [
 
 ### My Results
 
-<a href="http://tensorlayer.readthedocs.io">
 <div align="center">
 	<img src="img/SRNet-R_Comparison_1_label_1.png"/>
 </div>
 </a>
 
-<a href="http://tensorlayer.readthedocs.io">
 <div align="center">
 	<img src="img/SRNet-R_Comparison_2_label_1.png"/>
 </div>
 </a>
 
-<a href="http://tensorlayer.readthedocs.io">
 <div align="center">
 	<img src="img/SRNet-R_Comparison_3_label_1.png"/>
 </div>
