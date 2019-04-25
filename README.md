@@ -2,7 +2,7 @@
 
 - **Partially imported from [tensorlayer/srgan](https://github.com/tensorlayer/srgan).**
 - **Using "Group Normalization" layers instead of "Batch Normalization" layers.**
-- **Using "Residual in Residual Network".**
+- **Using "Residual of Residual Network".**
 - **Using "Swish" activation function instead of "ReLU".**
 - **Using Autoencorder's latent space content loss and MAE loss.**
 
